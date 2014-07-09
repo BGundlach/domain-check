@@ -8,6 +8,4 @@ Added the python script github.com/voronkovich/whoislist to allow updating serve
 
 ##To Do##
 
-Store values
-* textfile? meh
-* database? better... maybe send an email containing available domains.
+Separate Generic and Country Code TLDs
