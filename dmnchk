@@ -1,0 +1,100 @@
+ #!/bin/bash 
+ 
+# Description: Check for domain name availability
+# Please fork and improve me
+ 
+if [ "$#" == "0" ]; then 
+    echo "try \"dmnchk -h\" for help" 
+    exit 1
+fi 
+
+while getopts ":curlh" opt; do
+  case $opt in
+    h)
+      echo "Usage: dmnchk [options] domains(without tld extentions)"
+      echo "    Example: dmnchk purple"
+      echo "    Output : purple.com : available"
+      echo "             purple.net : available"
+      echo "             purple.ac : available"
+      echo " "
+      echo " "
+      echo "Options:"
+      echo "  -h display this help message"
+      echo "  -c classic domains only .com .net .org .biz"
+      echo "  -u update domain list"
+      exit 1
+      ;;
+    u)
+      echo "list is updating, this may take a while" >&2
+      python ./dmntools/getwhoislist.py ./dmntools/newwho.txt
+      sort -u ./dmntools/newwho.txt > ./dmntools/whois.txt
+      rm ./dmntools/newwho.txt
+      ;;
+    c)
+      CLASSIC=true
+      ;;
+    l)
+ 	  LIST=true
+ 	  ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      ;;
+  esac
+done
+
+shift $(($OPTIND-1))
+
+
+DOMAINS=()
+SERVERS=()
+while read line; do
+	THISDOMAIN=`echo $line| awk '{split($0,array,": ")} END{print array[1]}'`
+	THISSERVER=`echo $line| awk '{split($0,array,": ")} END{print array[2]}'`
+  DOMAINS+=($THISDOMAIN)
+  SERVERS+=($THISSERVER)
+done < dmntools/whois.txt
+ 
+
+ if [ $LIST = true ]; then
+ELEMENTS=${#DOMAINS[@]} 
+ 	  for (( i=0;i<$ELEMENTS;i++)); do 
+	      printf "%-8s\n" "${DOMAINS[${i}]}"
+done | column -x
+  exit 1 
+ fi
+
+if [ "$#" == "0" ]; then 
+    echo "No domain to check!" 
+    exit 1
+fi 
+
+
+if [ $CLASSIC = true ]; then
+	DOMAINS=( 'com' 'net' 'org' 'biz' )
+	while (( "$#" )); do 
+ ELEMENTS=${#DOMAINS[@]} 
+  for (( i=0;i<$ELEMENTS;i++)); do 
+      whois $1.${DOMAINS[${i}]} | egrep -q '^No match|^NOT FOUND|^Not fo|AVAILABLE|^No Data Fou|has not been regi|No entri' 
+	  if [ $? -eq 0 ]; then 
+	      echo "$1.${DOMAINS[${i}]} : available" |tr '[:upper:]' '[:lower:]'
+	  fi 
+  done 
+ 
+shift 
+ 
+done 
+else
+ELEMENTS=${#DOMAINS[@]} 
+while (( "$#" )); do 
+ 
+  for (( i=0;i<$ELEMENTS;i++)); do 
+      whois -h ${SERVERS[${i}]} $1.${DOMAINS[${i}]} | egrep -q '^No match|^NOT FOUND|^Not fo|AVAILABLE|^No Data Fou|has not been regi|No entri' 
+	  if [ $? -eq 0 ]; then 
+	      echo "$1.${DOMAINS[${i}]} : available"|tr '[:upper:]' '[:lower:]'
+	  fi 
+  done 
+ 
+shift 
+ 
+done 
+fi
