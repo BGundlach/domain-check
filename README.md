@@ -8,6 +8,7 @@ Unzip this file in your $PATH make sure it's executeable and dmntools is writeab
 
 ###Dependencies###
 **Python is required to update server list**
+
 *dirname may not work on some emulators breaking the script*
 
 ##Usage##
