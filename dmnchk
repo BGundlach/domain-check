@@ -8,7 +8,7 @@ if [ "$#" == "0" ]; then
     exit 1
 fi 
 scriptPath=$(dirname $0)
-while getopts ":cuelh" opt; do
+while getopts ":cuealh" opt; do
   case $opt in
     h)
       echo "Usage: dmnchk [options] domains(without tld extentions)"
@@ -19,8 +19,10 @@ while getopts ":cuelh" opt; do
       echo " "
       echo " "
       echo "Options:"
-      echo "  -h display this help message"
       echo "  -c classic domains only .com .net .org .biz"
+      echo "  -a search all, include nonenglish tlds"
+      echo "  -h display this help message"
+      echo "  -l list all tlds in list (can be combined with -e)"
       echo "  -u update domain list"
       exit 1
       ;;
@@ -37,7 +39,7 @@ while getopts ":cuelh" opt; do
     l)
  	  LIST=true
  	  ;;
- 	e)
+ 	[ae])
  	  EXTENDED=true
  	  ;;
     \?)
