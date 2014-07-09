@@ -7,8 +7,8 @@ if [ "$#" == "0" ]; then
     echo "try \"dmnchk -h\" for help" 
     exit 1
 fi 
-
-while getopts ":curlh" opt; do
+scriptPath=$(dirname $0)
+while getopts ":cuelh" opt; do
   case $opt in
     h)
       echo "Usage: dmnchk [options] domains(without tld extentions)"
@@ -26,15 +26,19 @@ while getopts ":curlh" opt; do
       ;;
     u)
       echo "list is updating, this may take a while" >&2
-      python ./dmntools/getwhoislist.py ./dmntools/newwho.txt
-      sort -u ./dmntools/newwho.txt > ./dmntools/whois.txt
-      rm ./dmntools/newwho.txt
+      python ${scriptPath}/dmntools/getwhoislist.py ${scriptPath}/dmntools/newwho.txt
+      sort -u ${scriptPath}/dmntools/newwho.txt > ${scriptPath}/dmntools/extendedalpha
+      grep -e ^[a-z] ${scriptPath}/dmntools/extendedalpha > ${scriptPath}/dmntools/standardalpha
+      rm ${scriptPath}/dmntools/newwho.txt
       ;;
     c)
       CLASSIC=true
       ;;
     l)
  	  LIST=true
+ 	  ;;
+ 	e)
+ 	  EXTENDED=true
  	  ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
@@ -44,18 +48,28 @@ done
 
 shift $(($OPTIND-1))
 
-
-DOMAINS=()
-SERVERS=()
-while read line; do
-	THISDOMAIN=`echo $line| awk '{split($0,array,": ")} END{print array[1]}'`
-	THISSERVER=`echo $line| awk '{split($0,array,": ")} END{print array[2]}'`
-  DOMAINS+=($THISDOMAIN)
-  SERVERS+=($THISSERVER)
-done < dmntools/whois.txt
+if [ "$EXTENDED" = true ]; then
+	DOMAINS=()
+	SERVERS=()
+	while read line; do
+		THISDOMAIN=`echo $line| awk '{split($0,array,": ")} END{print array[1]}'`
+		THISSERVER=`echo $line| awk '{split($0,array,": ")} END{print array[2]}'`
+		DOMAINS+=($THISDOMAIN)
+		SERVERS+=($THISSERVER)
+	done < ${scriptPath}/dmntools/extendedalpha
+else
+	DOMAINS=()
+	SERVERS=()
+	while read line; do
+		THISDOMAIN=`echo $line| awk '{split($0,array,": ")} END{print array[1]}'`
+		THISSERVER=`echo $line| awk '{split($0,array,": ")} END{print array[2]}'`
+		DOMAINS+=($THISDOMAIN)
+		SERVERS+=($THISSERVER)
+	done < ${scriptPath}/dmntools/standardalpha
+fi
  
 
- if [ $LIST = true ]; then
+ if [ "$LIST" = true ]; then
 ELEMENTS=${#DOMAINS[@]} 
  	  for (( i=0;i<$ELEMENTS;i++)); do 
 	      printf "%-8s\n" "${DOMAINS[${i}]}"
@@ -69,7 +83,7 @@ if [ "$#" == "0" ]; then
 fi 
 
 
-if [ $CLASSIC = true ]; then
+if [ "$CLASSIC" = true ]; then
 	DOMAINS=( 'com' 'net' 'org' 'biz' )
 	while (( "$#" )); do 
  ELEMENTS=${#DOMAINS[@]} 
