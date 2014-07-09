@@ -11,18 +11,22 @@ scriptPath=$(dirname $0)
 while getopts ":cuealh" opt; do
   case $opt in
     h)
-      echo "Usage: dmnchk [options] domains(without tld extentions)"
-      echo "    Example: dmnchk purple"
-      echo "    Output : purple.com : available"
-      echo "             purple.net : available"
-      echo "             purple.ac : available"
+      echo "USAGE:"
+      echo "  dmnchk [options] domains(without tld extentions)"
       echo " "
+      echo "EXAMPLE: "
+      echo "  dmnchk purple"
+      echo "Sample Output: "
+      echo "  purple.com : available"
+      echo "  purple.net : available"
+      echo "  purple.ac : available"
+      echo " etc."
       echo " "
-      echo "Options:"
+      echo "OPTIONS:"
       echo "  -c classic domains only .com .net .org .biz"
-      echo "  -a search all, include nonenglish tlds"
+      echo "  -a search all (include nonenglish tlds)"
       echo "  -h display this help message"
-      echo "  -l list all tlds in list (can be combined with -e)"
+      echo "  -l list all tlds in list (can be combined with -a)"
       echo "  -u update domain list"
       exit 1
       ;;
