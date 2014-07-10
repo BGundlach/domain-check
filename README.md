@@ -36,5 +36,5 @@ OPTIONS:
 Added the python script github.com/voronkovich/whoislist to allow updating server list
 
 ##To Do##
-
+Add multithreading capabilities, it takes way too long to process the list.
 Separate Generic and Country Code TLDs
