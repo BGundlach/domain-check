@@ -1,15 +1,20 @@
-#domain-check#
- ============
+# domain-check
 
 A bash script to check which tld's a particular domain is available under.
 
-##Installation##
-Unzip this file in your $PATH make sure it's executeable and dmntools is writeable
+## Installation
 
-###Dependencies###
-**Python is required to update server list**
 
-*dirname may not work on some emulators breaking the script*
+```bash
+# Go to where you want to put the files
+cd /opt #(or ~/bin or wherever you want to drop these files)
+
+# copy the filez
+git clone https://github.com/BGundlach/domain-check.git
+
+# link files to your PATH
+ls -sT domain-check/dmnchk ~/bin/dmnchk # assuming ~/bin is in your $PATH
+```
 
 ##Usage##
 ```
@@ -32,9 +37,6 @@ OPTIONS:
   -u update domain list
 ```
 
-##Whois server scraping##
-Added the python script github.com/voronkovich/whoislist to allow updating server list
-
 ##To Do##
-Add multithreading capabilities, it takes way too long to process the list.
 Separate Generic and Country Code TLDs
+accept domains with tlds

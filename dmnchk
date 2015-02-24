@@ -1,4 +1,4 @@
- #!/bin/bash 
+ #!/bin/sh 
  
 # Description: Check for domain name availability
 # Please fork and improve me
@@ -7,8 +7,19 @@ if [ "$#" == "0" ]; then
     echo "try \"dmnchk -h\" for help" 
     exit 1
 fi 
-scriptPath=$(dirname $0)
-while getopts ":cuealh" opt; do
+ONLY=true
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  TARGET="$(readlink "$SOURCE")"
+  if [[ $SOURCE == /* ]]; then
+    SOURCE="$TARGET"
+  else
+    SCRIPT_DIR="$( dirname "$SOURCE" )"
+    SOURCE="$SCRIPT_DIR/$TARGET" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+  fi
+done
+scriptPath="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+while getopts ":cealhu" opt; do
   case $opt in
     h)
       echo "USAGE:"
@@ -23,19 +34,20 @@ while getopts ":cuealh" opt; do
       echo " etc."
       echo " "
       echo "OPTIONS:"
-      echo "  -c classic domains only .com .net .org .biz"
-      echo "  -a search all (include nonenglish tlds)"
+      echo "  -c classic domains only (.com .net .org .biz)"
+      echo "  -a search all (include every tld)"
+      # echo "  -t time-crunch (faster but less accurate)"
       echo "  -h display this help message"
-      echo "  -l list all tlds in list (can be combined with -a)"
+      echo "  -l list all tlds"
       echo "  -u update domain list"
       exit 1
       ;;
     u)
       echo "list is updating, this may take a while" >&2
-      python ${scriptPath}/dmntools/getwhoislist.py ${scriptPath}/dmntools/newwho.txt
-      sort -u ${scriptPath}/dmntools/newwho.txt > ${scriptPath}/dmntools/extendedalpha
-      grep -e ^[a-z] ${scriptPath}/dmntools/extendedalpha > ${scriptPath}/dmntools/standardalpha
-      rm ${scriptPath}/dmntools/newwho.txt
+      wget -qP ${scriptPath}/ https://data.iana.org/TLD/tlds-alpha-by-domain.txt
+      tail -n +2 ${scriptPath}/tlds-alpha-by-domain.txt > ${scriptPath}/extendedalpha
+      grep -v "XN" ${scriptPath}/extendedalpha > ${scriptPath}/tlds-alpha-by-domain.txt
+      mv ${scriptPath}/tlds-alpha-by-domain.txt ${scriptPath}/extendedalpha
       ;;
     c)
       CLASSIC=true
@@ -43,8 +55,9 @@ while getopts ":cuealh" opt; do
     l)
  	  LIST=true
  	  ;;
- 	[ae])
+ 	  [ae])
  	  EXTENDED=true
+    ONLY=false
  	  ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
@@ -53,25 +66,27 @@ while getopts ":cuealh" opt; do
 done
 
 shift $(($OPTIND-1))
+function check_domain()
+{
+      host $1 | egrep -q 'not found' 
+    if [ $? -eq 0 ]; then 
+        echo "$1 : available" |tr '[:upper:]' '[:lower:]'
+    fi 
+}
+function check_domain_server()
+{
+      host $1 | egrep -q 'not found' 
+    if [ $? -eq 0 ]; then 
+        echo "$1 : available" |tr '[:upper:]' '[:lower:]'
+    fi 
+}
 
 if [ "$EXTENDED" = true ]; then
 	DOMAINS=()
-	SERVERS=()
 	while read line; do
-		THISDOMAIN=`echo $line| awk '{split($0,array,": ")} END{print array[1]}'`
-		THISSERVER=`echo $line| awk '{split($0,array,": ")} END{print array[2]}'`
+		THISDOMAIN=$line
 		DOMAINS+=($THISDOMAIN)
-		SERVERS+=($THISSERVER)
-	done < ${scriptPath}/dmntools/extendedalpha
-else
-	DOMAINS=()
-	SERVERS=()
-	while read line; do
-		THISDOMAIN=`echo $line| awk '{split($0,array,": ")} END{print array[1]}'`
-		THISSERVER=`echo $line| awk '{split($0,array,": ")} END{print array[2]}'`
-		DOMAINS+=($THISDOMAIN)
-		SERVERS+=($THISSERVER)
-	done < ${scriptPath}/dmntools/standardalpha
+	done < ${scriptPath}/extendedalpha
 fi
  
 
@@ -91,34 +106,32 @@ fi
 
 if [ "$CLASSIC" = true ]; then
 	DOMAINS=( 'com' 'net' 'org' 'biz' )
-	while (( "$#" )); do 
- ELEMENTS=${#DOMAINS[@]} 
-  for (( i=0;i<$ELEMENTS;i++)); do 
-    if host $1.${DOMAINS[${i}]} | grep "NXDOMAIN" >&/dev/null; then
-      whois $1.${DOMAINS[${i}]} | egrep -q '^No match|NOT FOUND|^Not fo|AVAILABLE|^No Data Fou|has not been regi|No entri' 
-	  if [ $? -eq 0 ]; then 
-	      echo "$1.${DOMAINS[${i}]} : available" |tr '[:upper:]' '[:lower:]'
-	  fi 
-	fi
+fi
+else
+  if [ "$ONLY" = true ]; then
+    DOMAINS=( 'com' )
+  fi
+ELEMENTS=${#DOMAINS[@]} 
+while (( "$#" )); do 
+  for i in `seq ${ELEMENTS}`; do
+      check_domain $1.${DOMAINS[${i}]} &
   done 
- 
-shift 
- 
+ shift 
 done 
 else
 ELEMENTS=${#DOMAINS[@]} 
+
+
 while (( "$#" )); do 
  
-  for (( i=0;i<$ELEMENTS;i++)); do 
-    if host $1.${DOMAINS[${i}]} | grep "NXDOMAIN" >&/dev/null; then
-      whois -h ${SERVERS[${i}]} $1.${DOMAINS[${i}]} | egrep -q '^No match|NOT FOUND|^Not fo|AVAILABLE|^No Data Fou|has not been regi|No entri' 
-	  if [ $? -eq 0 ]; then 
-	      echo "$1.${DOMAINS[${i}]} : available"|tr '[:upper:]' '[:lower:]'
-	  fi 
-	fi
-  done 
- 
+for i in `seq ${ELEMENTS}`; do
+      check_domain $1.${DOMAINS[${i}]} &
+done
+
 shift 
  
-done 
+done
 fi
+
+sleep $[$ELEMENTS / 3]
+# echo ""
