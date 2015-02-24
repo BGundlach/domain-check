@@ -1,7 +1,8 @@
- #!/bin/sh 
- 
+#!/bin/bash 
+# dmnchk v1.1
 # Description: Check for domain name availability
-# Please fork and improve me
+# Please fork and improve me on github
+# github.com/BGundlach/domain-check
  
 if [ "$#" == "0" ]; then 
     echo "try \"dmnchk -h\" for help" 

@@ -1,9 +1,9 @@
 # domain-check
+version 1.1
 
 A bash script to check which tld's a particular domain is available under.
 
 ## Installation
-
 
 ```bash
 # Go to where you want to put the files
@@ -17,6 +17,7 @@ ls -sT domain-check/dmnchk ~/bin/dmnchk # assuming ~/bin is in your $PATH
 ```
 
 ##Usage##
+
 ```
 USAGE:
   dmnchk [options] domains(without tld extentions)
