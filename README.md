@@ -13,7 +13,7 @@ cd /opt #(or ~/bin or wherever you want to drop these files)
 git clone https://github.com/BGundlach/domain-check.git
 
 # link files to your PATH
-ls -sT domain-check/dmnchk ~/bin/dmnchk # assuming ~/bin is in your $PATH
+ln -sT domain-check/dmnchk ~/bin/dmnchk # assuming ~/bin is in your $PATH
 ```
 
 ##Usage##
